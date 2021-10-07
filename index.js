@@ -16,7 +16,7 @@ app.use(cors({
 
 app.use(express.json())
 
-// **************** Node part with db ********************
+// ***************** Node part with db ********************
 
 // Each and every time while conneting to the db, 
 // follow below steps:
