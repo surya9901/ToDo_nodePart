@@ -1,8 +1,9 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
-const mongodb = require("mongodb")
+const mongodb = require("mongodb");
 const mongoClient = mongodb.MongoClient;
+const PORT = process.env.PORT || 3000;
 
 // here mongodb - protocol,
 // localhost:27017 - IP address & Port,
@@ -125,8 +126,8 @@ app.delete("/delete-task/:id", async function (req, res) {
     }
 })
 
-app.listen(3000, function () {
-    console.log("this app is listening to port 3000")
+app.listen(PORT, function () {
+    console.log(`This app is listening to port ${PORT}`);
 })
 
 
