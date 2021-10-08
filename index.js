@@ -4,11 +4,13 @@ const cors = require("cors");
 const mongodb = require("mongodb");
 const mongoClient = mongodb.MongoClient;
 const PORT = process.env.PORT || 3000;
+const bcryptjs = require("bcryptjs");
 
 // here mongodb - protocol,
 // localhost:27017 - IP address & Port,
 // todo_app -db name as mongo db creates db name dynamically 
-const url = "mongodb+srv://surya:admin123@cluster0.pvvmz.mongodb.net?retryWrites=true&w=majority"
+// const url = "mongodb+srv://surya:admin123@cluster0.pvvmz.mongodb.net?retryWrites=true&w=majority"
+const url = "mongodb://localhost:27017";
 
 // to ignore CORS error
 app.use(cors({
@@ -26,6 +28,76 @@ app.use(express.json())
 // 3.Select the collection
 // 4.Perform Operation
 // 5.Close the connection
+
+
+app.post("/register", async function (req, res) {
+    try {
+
+        // Initiate the connection
+        let client = await mongoClient.connect(url)
+
+        // Connect the db
+        let db = client.db("todo_app");
+
+        // Hashing the password
+        let salt = bcryptjs.genSaltSync(10);
+        let hash = bcryptjs.hashSync(req.body.password, salt);
+        req.body.password = hash;
+
+        // select collections and perform operation
+        let data = await db.collection("users").insertOne(req.body)
+
+        // close the connection
+        await client.close();
+
+        res.json({
+            message: "User Created",
+            id: data._id
+        })
+    }
+    catch (error) {
+        console.error();
+    }
+})
+
+app.post("/login", async function (req, res) {
+    try {
+        // Intiate the connection
+        let client = await mongoClient.connect(url)
+
+        // select the db
+        let db = client.db("todo_app");
+
+        // find the user with the email id 
+        let user = await db.collection("users").findOne({ userName: req.body.userName })
+        // console.log(user);
+        if (user) {
+            // hash the incoming password
+            // compare the hash password with the users password
+            // which is in the database and
+            let matchPassword = bcryptjs.compareSync(req.body.password, user.password);
+            if (matchPassword) {
+                // Generate JWT Token
+                res.json({
+                    message: true
+                })
+            } else {
+                res.status(404).json({
+                    message: "Username/Password incorrect"
+                })
+            }
+        } else {
+            res.status(404).json({
+                message: "Username/Password incorrect"
+            })
+        }
+
+        // if both are correct then allow access
+
+    } catch (error) {
+        console.error();
+    }
+})
 
 app.get("/list-all-todo", async function (req, res) {
     try {
