@@ -9,8 +9,8 @@ const bcryptjs = require("bcryptjs");
 // here mongodb - protocol,
 // localhost:27017 - IP address & Port,
 // todo_app -db name as mongo db creates db name dynamically 
-// const url = "mongodb+srv://surya:admin123@cluster0.pvvmz.mongodb.net?retryWrites=true&w=majority"
-const url = "mongodb://localhost:27017";
+const url = "mongodb+srv://surya:admin123@cluster0.pvvmz.mongodb.net?retryWrites=true&w=majority"
+// const url = "mongodb://localhost:27017";
 
 // to ignore CORS error
 app.use(cors({
