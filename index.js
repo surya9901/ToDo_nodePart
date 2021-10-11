@@ -5,12 +5,16 @@ const mongodb = require("mongodb");
 const mongoClient = mongodb.MongoClient;
 const PORT = process.env.PORT || 3000;
 const bcryptjs = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const dotenv = require("dotenv");
+dotenv.config();
+
 
 // here mongodb - protocol,
 // localhost:27017 - IP address & Port,
 // todo_app -db name as mongo db creates db name dynamically 
-const url = "mongodb+srv://surya:admin123@cluster0.pvvmz.mongodb.net?retryWrites=true&w=majority"
-// const url = "mongodb://localhost:27017";
+// const url = "mongodb+srv://surya:admin123@cluster0.pvvmz.mongodb.net?retryWrites=true&w=majority"
+const url = process.env.DB;
 
 // to ignore CORS error
 app.use(cors({
@@ -18,6 +22,35 @@ app.use(cors({
 }))
 
 app.use(express.json())
+
+function authenticate(req, res, next) {
+    try {
+        // check if the token is present, 
+        // if present then check if it is valid
+        if (req.headers.authorization) {
+            jwt.verify(req.headers.authorization, process.env.JWT_SECRET, function (error, decoded) {
+                if (error) {
+                    console.log(error)
+                    res.status(401).json({
+                        message: "Unauthorized"
+                    })
+                } else {
+                    console.log(decoded)
+                    next()
+                }
+            })
+        } else {
+            res.status(401).json({
+                message: "No Token Present"
+            })
+        }
+    } catch (error) {
+        console.error();
+        res.status(500).json({
+            message: "Internal Server Error"
+        })
+    }
+}
 
 // ***************** Node part with db ********************
 
@@ -78,8 +111,11 @@ app.post("/login", async function (req, res) {
             let matchPassword = bcryptjs.compareSync(req.body.password, user.password);
             if (matchPassword) {
                 // Generate JWT Token
+                let token = jwt.sign({ id: user._id }, process.env.JWT_SECRET)
+                console.log(token)
                 res.json({
-                    message: true
+                    message: true,
+                    token
                 })
             } else {
                 res.status(404).json({
@@ -99,7 +135,7 @@ app.post("/login", async function (req, res) {
     }
 })
 
-app.get("/list-all-todo", async function (req, res) {
+app.get("/list-all-todo", [authenticate], async function (req, res) {
     try {
 
         // Initiate the connection
@@ -123,7 +159,7 @@ app.get("/list-all-todo", async function (req, res) {
     }
 })
 
-app.post("/create-task", async function (req, res) {
+app.post("/create-task", [authenticate], async function (req, res) {
     try {
         // Connect the db / initiate the connection
         let client = await mongoClient.connect(url);
@@ -148,7 +184,7 @@ app.post("/create-task", async function (req, res) {
 })
 
 
-app.put("/update-task/:id", async function (req, res) {
+app.put("/update-task/:id", [authenticate], async function (req, res) {
     try {
         // Connect the db / initiate the connection
         let client = await mongoClient.connect(url);
@@ -173,7 +209,7 @@ app.put("/update-task/:id", async function (req, res) {
     }
 })
 
-app.delete("/delete-task/:id", async function (req, res) {
+app.delete("/delete-task/:id", [authenticate], async function (req, res) {
     try {
         // Connect the db / initiate the connection
         let client = await mongoClient.connect(url);
@@ -197,6 +233,13 @@ app.delete("/delete-task/:id", async function (req, res) {
         })
     }
 })
+
+app.get("/dashboard", [authenticate], async function (req, res) {
+    res.json({
+        message: "Protected Data"
+    })
+})
+
 
 app.listen(PORT, function () {
     console.log(`This app is listening to port ${PORT}`);
