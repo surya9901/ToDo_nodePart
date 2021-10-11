@@ -35,7 +35,7 @@ function authenticate(req, res, next) {
                         message: "Unauthorized"
                     })
                 } else {
-                    console.log(decoded)
+                    req.userid = decoded.id
                     next()
                 }
             })
@@ -145,7 +145,7 @@ app.get("/list-all-todo", [authenticate], async function (req, res) {
         let db = client.db("todo_app")
 
         // select the collection and perform operation
-        let data = await db.collection("task").find({}).toArray();
+        let data = await db.collection("task").find({userid : req.userid}).toArray();
 
         // close connection
         await client.close();
@@ -168,6 +168,7 @@ app.post("/create-task", [authenticate], async function (req, res) {
         let db = client.db("todo_app")
 
         // slect the collection and perfom the action
+        req.body.userid = req.userid;
         let data = await db.collection("task").insertOne(req.body)
 
         // close the connection
